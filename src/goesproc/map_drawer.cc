@@ -113,6 +113,10 @@ void MapDrawer::generatePoints(const Config::Map& map, std::vector<std::vector<c
     } else if (geometry["type"] == "LineString") {
       generatePoints(out, geometry["coordinates"]);
     }
+    } else if (geometry["type"] == "Point") {
+      // Add the point to the output vector.
+      out.push_back({ cv::Point(geometry["coordinates"][0], geometry["coordinates"][1]) });
+    }
   }
 }
 
