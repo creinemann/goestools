@@ -1,4 +1,11 @@
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10...3.31 FATAL_ERROR)
+
+# The vendored libraries (libcorrect, libaec, nanomsg) still declare
+# very old minimum CMake versions, which CMake 4.x refuses outright.
+# Let them configure with 3.5-era policies on any modern CMake.
+if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
+  set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+endif()
 
 project(goesdec CXX C)
 
@@ -57,7 +64,7 @@ endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pedantic -Wall")
-if("${CMAKE_BUILD_TYPE}" EQUAL "Release")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 endif()
@@ -138,6 +145,13 @@ if(${BUILD_GOESPROC})
   # Install contrast curve and false color LUT
   install(
     DIRECTORY share/wxstar
+    DESTINATION share/goestools
+    COMPONENT goestools)
+
+  # USRadioguy false color LUT (regenerate with
+  # scripts/make_usradioguy_lut.py)
+  install(
+    DIRECTORY share/usradioguy
     DESTINATION share/goestools
     COMPONENT goestools)
 

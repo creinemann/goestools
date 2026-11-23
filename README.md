@@ -2,6 +2,27 @@
 
 Tools to work with signals and files from GOES satellites.
 
+> **USRadioguy fork** ([usradioguy.com](https://usradioguy.com)) of
+> [pietern/goestools](https://github.com/pietern/goestools). What's
+> different here:
+>
+> * Builds on current toolchains: CMake 3.10 through CMake 4.x,
+>   GCC 13, OpenCV 4, PROJ 9.
+> * The libaec submodule points at its GitHub mirror (the old
+>   gitlab.dkrz.de URL often fails to clone).
+> * Fixed a compile error in map overlays (`map_drawer.cc`).
+>   GeoJSON `Point`/`MultiPoint`/`MultiLineString` features now draw
+>   correctly.
+> * **Himawari-9 false color**: same setup as GOES-18/19
+>   (`channels = [ "vs", "ir" ]` + `[handler.lut]` + optional
+>   `[handler.remap.vs]`).
+> * Himawari handler now honors `channels` filters and accepts band
+>   names (`b03`, `b13`, `b08`). It also stamps images with true UTC
+>   on machines whose clock isn't set to UTC.
+> * Example config ships GOES-18, GOES-19 and Himawari-9 handlers.
+> * New `usradioguy` false color LUT (`share/usradioguy/`), generated
+>   by `scripts/make_usradioguy_lut.py`.
+
 * **goesrecv**: Demodulate and decode signal into packet stream.
 * **goeslrit**: Assemble LRIT files from packet stream.
 * **goesproc**: Process LRIT files into plain files and images.
@@ -20,7 +41,8 @@ System dependencies:
 
 * CMake
 * C++14 compiler
-* OpenCV 2 (for image processing in goesproc)
+* OpenCV 2, 3 or 4 (for image processing in goesproc)
+* PROJ (optional, for map overlays)
 * zlib (for EMWIN decompression)
 
 Bundled dependencies:
@@ -31,12 +53,13 @@ Bundled dependencies:
 ## Build
 
 ``` shell
-git clone https://github.com/pietern/goestools
+git clone --recursive https://github.com/creinemann/goestools
 cd goestools
 mkdir -p build
 cd build
 cmake ../ -DCMAKE_INSTALL_PREFIX=/usr/local
-ls ./src/goesdec ./src/goesproc
+make -j4
+sudo make install
 ```
 
 ## Usage

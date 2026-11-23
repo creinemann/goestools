@@ -112,10 +112,19 @@ void MapDrawer::generatePoints(const Config::Map& map, std::vector<std::vector<c
       }
     } else if (geometry["type"] == "LineString") {
       generatePoints(out, geometry["coordinates"]);
-    }
+    } else if (geometry["type"] == "MultiLineString") {
+      for (const auto& line : geometry["coordinates"]) {
+        generatePoints(out, line);
+      }
     } else if (geometry["type"] == "Point") {
-      // Add the point to the output vector.
-      out.push_back({ cv::Point(geometry["coordinates"][0], geometry["coordinates"][1]) });
+      // Project the point like any other coordinate. A degenerate
+      // two-point segment makes cv::polylines draw it as a dot.
+      const auto& c = geometry["coordinates"];
+      generatePoints(out, json::array({c, c}));
+    } else if (geometry["type"] == "MultiPoint") {
+      for (const auto& c : geometry["coordinates"]) {
+        generatePoints(out, json::array({c, c}));
+      }
     }
   }
 }

@@ -14,6 +14,26 @@
 
 using namespace util;
 
+namespace {
+
+// Allow Himawari band names in the config as aliases for the short
+// channel names goesproc uses for the HRIT relay.
+std::string normalizeChannel(const std::string& in) {
+  const auto s = toUpper(in);
+  if (s == "B03" || s == "VIS") {
+    return "VS";
+  }
+  if (s == "B13") {
+    return "IR";
+  }
+  if (s == "B08") {
+    return "WV";
+  }
+  return s;
+}
+
+} // namespace
+
 Himawari8ImageHandler::Himawari8ImageHandler(
   const Config::Handler& config,
   const std::shared_ptr<FileWriter>& fileWriter)
@@ -23,8 +43,25 @@ Himawari8ImageHandler::Himawari8ImageHandler(
     region = toUpper(region);
   }
   for (auto& channel : config_.channels) {
-    channel = toUpper(channel);
+    channel = normalizeChannel(channel);
   }
+
+  // Remap tables are keyed by upper-cased channel name in the config;
+  // normalize aliases (e.g. [handler.remap.b03]) as well.
+  std::map<std::string, cv::Mat> remap;
+  for (const auto& it : config_.remap) {
+    remap[normalizeChannel(it.first)] = it.second;
+  }
+  config_.remap = std::move(remap);
+}
+
+bool Himawari8ImageHandler::matchChannel(const Channel& channel) const {
+  if (config_.channels.empty()) {
+    return true;
+  }
+  const auto begin = std::begin(config_.channels);
+  const auto end = std::end(config_.channels);
+  return std::find(begin, end, channel.nameShort) != end;
 }
 
 void Himawari8ImageHandler::handle(std::shared_ptr<const lrit::File> f) {
@@ -33,13 +70,13 @@ void Himawari8ImageHandler::handle(std::shared_ptr<const lrit::File> f) {
     return;
   }
 
-  // Filter Himawari 8
+  // Filter Himawari 8/9
   auto nlh = f->getHeader<lrit::NOAALRITHeader>();
   if (nlh.productID != 43) {
     return;
   }
 
-  // All images relayed from Himawari 8 are segmented.
+  // All images relayed from Himawari are segmented.
   // I have seen files without segment identification header
   // and that have fewer bytes than listed in the header.
   // I think they are corrupted, so let's ignore them.
@@ -48,8 +85,10 @@ void Himawari8ImageHandler::handle(std::shared_ptr<const lrit::File> f) {
   }
 
   // Expect only full disk images
+  if (nlh.productSubID % 2 != 1) {
+    return;
+  }
   Region region;
-  ASSERT(nlh.productSubID % 2 == 1);
   region.nameShort = "FD";
   region.nameLong = "Full Disk";
 
@@ -68,8 +107,7 @@ void Himawari8ImageHandler::handle(std::shared_ptr<const lrit::File> f) {
     return;
   }
 
-  // Assume all images are segmented
-  if (!f->hasHeader<lrit::SegmentIdentificationHeader>()) {
+  if (!matchChannel(channel)) {
     return;
   }
 
@@ -86,28 +124,121 @@ void Himawari8ImageHandler::handle(std::shared_ptr<const lrit::File> f) {
   }
 
   vector.push_back(f);
-  if (vector.size() == sih.maxSegment) {
-    Timer t;
-
-    auto first = vector.front();
-    auto image = Image::createFromFiles(vector);
-    vector.clear();
-
-    FilenameBuilder fb;
-    fb.dir = config_.dir;
-    fb.filename = getBasename(*f);
-    fb.time = getTime(*f);
-    fb.region = region;
-    fb.channel = channel;
-
-    auto mat = image->getRawImage();
-    overlayMaps(*f, mat);
-    auto path = fb.build(config_.filename, config_.format);
-    fileWriter_->write(path, mat, &t);
-    if (config_.json) {
-      fileWriter_->writeHeader(*first, path);
-    }
+  if (vector.size() != sih.maxSegment) {
     return;
+  }
+
+  auto first = vector.front();
+  auto image = buildImage(vector, channel);
+  vector.clear();
+
+  // False color handlers combine two channels into one image.
+  if (config_.lut.data) {
+    handleFalseColor(first, f, region, channel, std::move(image));
+    return;
+  }
+
+  Timer t;
+  FilenameBuilder fb;
+  fb.dir = config_.dir;
+  fb.filename = getBasename(*f);
+  fb.time = getTime(*f);
+  fb.region = region;
+  fb.channel = channel;
+
+  auto mat = image->getRawImage();
+  overlayMaps(*f, mat);
+  auto path = fb.build(config_.filename, config_.format);
+  fileWriter_->write(path, mat, &t);
+  if (config_.json) {
+    fileWriter_->writeHeader(*first, path);
+  }
+}
+
+std::unique_ptr<Image> Himawari8ImageHandler::buildImage(
+    const std::vector<std::shared_ptr<const lrit::File>>& files,
+    const Channel& channel) const {
+  auto image = Image::createFromFiles(files);
+
+  // Apply contrast curve if configured for this channel,
+  // same as [handler.remap.chXX] for GOES-R.
+  auto it = config_.remap.find(channel.nameShort);
+  if (it != std::end(config_.remap)) {
+    image->remap(it->second);
+  }
+
+  return image;
+}
+
+void Himawari8ImageHandler::handleFalseColor(
+    std::shared_ptr<const lrit::File> first,
+    std::shared_ptr<const lrit::File> last,
+    const Region& region,
+    const Channel& channel,
+    std::unique_ptr<Image> image) {
+  Timer t;
+  const auto time = getTime(*last).tv_sec;
+
+  // Nothing pending, or pending image is from another scan
+  // (its partner never arrived): keep this one and wait.
+  if (!pending_ || pending_->time != time) {
+    pending_ = std::make_unique<Pending>(
+      Pending{first, last, region, channel, time, std::move(image)});
+    return;
+  }
+
+  // Same channel twice for the same scan: duplicate on the stream.
+  if (pending_->channel.nameShort == channel.nameShort) {
+    return;
+  }
+
+  // Order inputs to match the configured channel order. The first
+  // channel indexes LUT rows (y), the second LUT columns (x), exactly
+  // as for GOES-R (e.g. [ "ch02", "ch13" ] -> [ "vs", "ir" ]).
+  auto p = std::move(pending_);
+  std::unique_ptr<Image> i0;
+  std::unique_ptr<Image> i1;
+  if (p->channel.nameShort == config_.channels.front()) {
+    i0 = std::move(p->image);
+    i1 = std::move(image);
+  } else {
+    i0 = std::move(image);
+    i1 = std::move(p->image);
+  }
+
+  // Name the synthesized image after the scan, not either input.
+  // Example: IMG_DK01VIS_201712162250 -> IMG_DK01FC_201712162250
+  auto basename = getBasename(*last);
+  auto parts = split(basename, '_');
+  if (parts.size() >= 3) {
+    if (parts[1].rfind("DK", 0) == 0 && parts[1].size() >= 4) {
+      parts[1] = parts[1].substr(0, 4) + "FC";
+    } else {
+      parts[1] += "FC";
+    }
+    basename = join(parts, '_');
+  } else {
+    basename += "_FC";
+  }
+
+  FilenameBuilder fb;
+  fb.dir = config_.dir;
+  fb.filename = basename;
+  fb.time = getTime(*last);
+  fb.region = region;
+  fb.channel.nameShort = "FC";
+  fb.channel.nameLong = "False Color";
+
+  auto out = Image::generateFalseColor(i0, i1, config_.lut);
+  i0.reset();
+  i1.reset();
+
+  auto mat = out->getRawImage();
+  overlayMaps(*last, mat);
+  auto path = fb.build(config_.filename, config_.format);
+  fileWriter_->write(path, mat, &t);
+  if (config_.json) {
+    fileWriter_->writeHeader(*first, path);
   }
 }
 
@@ -140,9 +271,11 @@ struct timespec Himawari8ImageHandler::getTime(const lrit::File& f) const {
   memset(&tm, 0, sizeof(tm));
   auto ptr = strptime(buf, format, &tm);
 
-  // Only use time if strptime was successful
+  // Only use time if strptime was successful.
+  // The timestamp is UTC; use timegm so the result doesn't
+  // depend on the local timezone of the machine running goesproc.
   if (ptr == (buf + 12)) {
-    time.tv_sec = mktime(&tm);
+    time.tv_sec = timegm(&tm);
     time.tv_nsec = 0;
   }
 
