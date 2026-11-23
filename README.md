@@ -4,9 +4,13 @@ Tools to work with signals and files from GOES satellites.
 
 > **USRadioguy fork** ([usradioguy.com](https://usradioguy.com)) of
 > [pietern/goestools](https://github.com/pietern/goestools).
+> This is a significant update. Includes updates for GOES 18,19 and Himawari-9
+> **See [USRADIOGUY.md](USRADIOGUY.md) for everything that's new**, and
+> [the Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
 > Builds on current systems (CMake 4, OpenCV 4, PROJ 9, Raspberry Pi
 > Buster), fixes map overlays, adds **Himawari-9 false color**, night-side
 > LUTs, and a safe `make install`.
+> 
 > **See [USRADIOGUY.md](USRADIOGUY.md) for everything that's new**, and
 > [the Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
 
