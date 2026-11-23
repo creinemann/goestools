@@ -3,41 +3,14 @@
 Tools to work with signals and files from GOES satellites.
 
 > **USRadioguy fork** ([usradioguy.com](https://usradioguy.com)) of
-> [pietern/goestools](https://github.com/pietern/goestools). What's
-> different here:
->
-> * Builds on current toolchains: CMake 3.10 through CMake 4.x,
->   GCC 13, OpenCV 4, PROJ 9.
-> * The libaec submodule points at its GitHub mirror (the old
->   gitlab.dkrz.de URL often fails to clone).
-> * Fixed a compile error in map overlays (`map_drawer.cc`).
->   GeoJSON `Point`/`MultiPoint`/`MultiLineString` features now draw
->   correctly.
-> * **Himawari-9 false color**: same setup as GOES-18/19
->   (`channels = [ "vs", "ir" ]` + `[handler.lut]` + optional
->   `[handler.remap.vs]`).
-> * Himawari handler now honors `channels` filters and accepts band
->   names (`b03`, `b13`, `b08`). It also stamps images with true UTC
->   on machines whose clock isn't set to UTC.
-> * Example config ships GOES-18, GOES-19 and Himawari-9 handlers. It is
->   installed as `share/goestools/goesproc-goesr.conf.example`, so
->   `make install` never overwrites a live `goesproc-goesr.conf` there.
-> * False color LUTs in `share/usradioguy/`:
->   * `usradioguy_lut.png`: the USRadioguy custom LUT (default for
->     GOES-18, GOES-19 and Himawari-9 in the example config)
->   * `usradioguy_night_lut.png`: same daytime colors, plus cold cloud
->     tops stay visible on the night side
->     (`scripts/make_night_lut.py`, works on any LUT)
->   * `himawari9_vs_curve.png`: contrast curve that brings Himawari VS
->     up to GOES ch02 brightness (`scripts/make_himawari_vs_curve.py`)
->   * `himawari9_ir_curve.png`: puts Himawari IR on the GOES ch13
->     scale so land is green, not red (`scripts/calibrate_himawari_ir.py`)
->   * `usradioguy_natural_lut.png`: experimental from-scratch LUT
->     (`scripts/make_natural_lut.py`)
+> [pietern/goestools](https://github.com/pietern/goestools).
+> Builds on current systems (CMake 4, OpenCV 4, PROJ 9, Raspberry Pi
+> Buster), fixes map overlays, adds **Himawari-9 false color**, night-side
+> LUTs, and a safe `make install`.
+> **See [USRADIOGUY.md](USRADIOGUY.md) for everything that's new**, and
+> [the Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
 
-* **goesrecv**: Demodulate and decode signal into packet stream.
-* **goeslrit**: Assemble LRIT files from packet stream.
-* **goesproc**: Process LRIT files into plain files and images.
+![GOES-19 and Himawari-9 false color from Horicon, WI](docs/images/usradioguy_before_after.jpg)
 
 I started writing this to learn about things involved in the GOES
 communication pipeline and in the process learn more about space
