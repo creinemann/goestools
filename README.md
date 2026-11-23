@@ -28,6 +28,8 @@ Tools to work with signals and files from GOES satellites.
 >     (`scripts/make_night_lut.py`, works on any LUT)
 >   * `himawari9_vs_curve.png`: contrast curve that brings Himawari VS
 >     up to GOES ch02 brightness (`scripts/make_himawari_vs_curve.py`)
+>   * `himawari9_ir_curve.png`: puts Himawari IR on the GOES ch13
+>     scale so land is green, not red (`scripts/calibrate_himawari_ir.py`)
 >   * `usradioguy_natural_lut.png`: experimental from-scratch LUT
 >     (`scripts/make_natural_lut.py`)
 

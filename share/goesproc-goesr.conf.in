@@ -294,6 +294,12 @@ json = false
   [handler.remap.vs]
   path = "${CMAKE_INSTALL_PREFIX}/share/goestools/usradioguy/himawari9_vs_curve.png"
 
+  # Himawari IR uses a different count-to-temperature scale than GOES
+  # ch13; without this, land renders red/orange instead of green.
+  # Re-calibrate with scripts/calibrate_himawari_ir.py.
+  [handler.remap.ir]
+  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/usradioguy/himawari9_ir_curve.png"
+
   # USRadioguy custom LUT. Swap in usradioguy_night_lut.png to keep
   # cold cloud tops visible on the night side of the disk.
   [handler.lut]

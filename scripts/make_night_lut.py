@@ -20,7 +20,7 @@ from PIL import Image
 # --- knobs -----------------------------------------------------------
 NIGHT_CLOUD = (150, 168, 196)   # colour of the coldest night cloud tops
 NIGHT_SKY   = (4, 8, 20)        # night-side background (clear sky)
-CLOUD_FROM, CLOUD_TO = 0.30, 0.85   # IR coldness range clouds fade in over
+CLOUD_FROM, CLOUD_TO = 0.24, 0.55   # IR coldness range clouds fade in over (ch13 counts ~61-140)
 SPACE_TO = 0.10                     # IR counts below this fade to black (space)
 FADE_FROM, FADE_TO = 0.02, 0.16     # visible range over which night fades out
 # ---------------------------------------------------------------------
