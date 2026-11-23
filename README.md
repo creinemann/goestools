@@ -19,7 +19,9 @@ Tools to work with signals and files from GOES satellites.
 > * Himawari handler now honors `channels` filters and accepts band
 >   names (`b03`, `b13`, `b08`). It also stamps images with true UTC
 >   on machines whose clock isn't set to UTC.
-> * Example config ships GOES-18, GOES-19 and Himawari-9 handlers.
+> * Example config ships GOES-18, GOES-19 and Himawari-9 handlers. It is
+>   installed as `share/goestools/goesproc-goesr.conf.example`, so
+>   `make install` never overwrites a live `goesproc-goesr.conf` there.
 > * False color LUTs in `share/usradioguy/`:
 >   * `usradioguy_lut.png`: the USRadioguy custom LUT (default for
 >     GOES-18, GOES-19 and Himawari-9 in the example config)

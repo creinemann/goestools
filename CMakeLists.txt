@@ -131,15 +131,19 @@ if(${BUILD_GOESPROC})
   install(
     FILES "${PROJECT_BINARY_DIR}/share/goesproc-goesn.conf"
     DESTINATION share/goestools
+    RENAME goesproc-goesn.conf.example
     COMPONENT goestools)
 
-  # Process and install GOES-R series example config
+  # Process and install GOES-R series example config.
+  # Installed as *.example so "make install" never overwrites a live
+  # config kept at share/goestools/goesproc-goesr.conf.
   configure_file(
     share/goesproc-goesr.conf.in
     "${PROJECT_BINARY_DIR}/share/goesproc-goesr.conf")
   install(
     FILES "${PROJECT_BINARY_DIR}/share/goesproc-goesr.conf"
     DESTINATION share/goestools
+    RENAME goesproc-goesr.conf.example
     COMPONENT goestools)
 
   # Install contrast curve and false color LUT
