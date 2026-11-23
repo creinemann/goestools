@@ -223,8 +223,10 @@ json = false
   [handler.remap.ch02]
   path = "${CMAKE_INSTALL_PREFIX}/share/goestools/wxstar/wxstar_goes16_ch02_curve.png"
 
+  # USRadioguy custom LUT. Swap in usradioguy_night_lut.png to keep
+  # cold cloud tops visible on the night side of the disk.
   [handler.lut]
-  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/wxstar/wxstar_goes16_lut.png"
+  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/usradioguy/usradioguy_lut.png"
 
   [[handler.map]]
   path = "${CMAKE_INSTALL_PREFIX}/share/goestools/ne/ne_50m_admin_0_countries_lakes.json"
@@ -261,8 +263,10 @@ json = false
   [handler.remap.ch02]
   path = "${CMAKE_INSTALL_PREFIX}/share/goestools/wxstar/wxstar_goes16_ch02_curve.png"
 
+  # USRadioguy custom LUT. Swap in usradioguy_night_lut.png to keep
+  # cold cloud tops visible on the night side of the disk.
   [handler.lut]
-  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/wxstar/wxstar_goes16_lut.png"
+  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/usradioguy/usradioguy_lut.png"
 
   [[handler.map]]
   path = "${CMAKE_INSTALL_PREFIX}/share/goestools/ne/ne_50m_admin_0_countries_lakes.json"
@@ -288,8 +292,10 @@ json = false
   [handler.remap.vs]
   path = "${CMAKE_INSTALL_PREFIX}/share/goestools/wxstar/wxstar_goes16_ch02_curve.png"
 
+  # USRadioguy custom LUT. Swap in usradioguy_night_lut.png to keep
+  # cold cloud tops visible on the night side of the disk.
   [handler.lut]
-  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/wxstar/wxstar_goes16_lut.png"
+  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/usradioguy/usradioguy_lut.png"
 
   [[handler.map]]
   path = "${CMAKE_INSTALL_PREFIX}/share/goestools/ne/ne_50m_admin_0_countries_lakes.json"

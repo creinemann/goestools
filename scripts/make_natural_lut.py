@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the USRadioguy false color LUT for goesproc.
+"""Generate the "natural" false color LUT for goesproc (built from scratch).
 
 goesproc false color maps two 8-bit channels through a 256x256 RGB
 table: row (y) = first channel  (GOES ch02 / Himawari VS, visible),
@@ -13,7 +13,7 @@ Design goals:
   * the night side is NOT black: cold IR cloud tops stay visible in
     blue-grey so the terminator blends smoothly
 
-Usage: make_usradioguy_lut.py [output.png]
+Usage: make_natural_lut.py [output.png]
 Every knob below is a plain number; tweak and re-run.
 """
 import sys
@@ -68,6 +68,6 @@ night_w = 1.0 - smooth(0.015, 0.10, v)
 rgb = lerp(day, night, night_w)
 lut = np.clip(np.rint(rgb), 0, 255).astype(np.uint8)
 
-out = sys.argv[1] if len(sys.argv) > 1 else "usradioguy_lut.png"
+out = sys.argv[1] if len(sys.argv) > 1 else "usradioguy_natural_lut.png"
 Image.fromarray(lut, "RGB").save(out)
 print("wrote", out, lut.shape)

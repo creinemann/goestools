@@ -20,8 +20,14 @@ Tools to work with signals and files from GOES satellites.
 >   names (`b03`, `b13`, `b08`). It also stamps images with true UTC
 >   on machines whose clock isn't set to UTC.
 > * Example config ships GOES-18, GOES-19 and Himawari-9 handlers.
-> * New `usradioguy` false color LUT (`share/usradioguy/`), generated
->   by `scripts/make_usradioguy_lut.py`.
+> * False color LUTs in `share/usradioguy/`:
+>   * `usradioguy_lut.png`: the USRadioguy custom LUT (default for
+>     GOES-18, GOES-19 and Himawari-9 in the example config)
+>   * `usradioguy_night_lut.png`: same daytime colors, plus cold cloud
+>     tops stay visible on the night side
+>     (`scripts/make_night_lut.py`, works on any LUT)
+>   * `usradioguy_natural_lut.png`: experimental from-scratch LUT
+>     (`scripts/make_natural_lut.py`)
 
 * **goesrecv**: Demodulate and decode signal into packet stream.
 * **goeslrit**: Assemble LRIT files from packet stream.
