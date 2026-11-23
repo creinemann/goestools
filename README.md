@@ -26,6 +26,8 @@ Tools to work with signals and files from GOES satellites.
 >   * `usradioguy_night_lut.png`: same daytime colors, plus cold cloud
 >     tops stay visible on the night side
 >     (`scripts/make_night_lut.py`, works on any LUT)
+>   * `himawari9_vs_curve.png`: contrast curve that brings Himawari VS
+>     up to GOES ch02 brightness (`scripts/make_himawari_vs_curve.py`)
 >   * `usradioguy_natural_lut.png`: experimental from-scratch LUT
 >     (`scripts/make_natural_lut.py`)
 

@@ -160,6 +160,14 @@ std::unique_ptr<Image> Himawari8ImageHandler::buildImage(
     const Channel& channel) const {
   auto image = Image::createFromFiles(files);
 
+  // Space around the disk is white (255) in the relayed IR image,
+  // which a false color LUT would render as the coldest cloud tops.
+  // Blank it out like the GOES-R handler does. Only done for false
+  // color so plain image output stays byte-identical to before.
+  if (config_.lut.data) {
+    image->fillSides();
+  }
+
   // Apply contrast curve if configured for this channel,
   // same as [handler.remap.chXX] for GOES-R.
   auto it = config_.remap.find(channel.nameShort);

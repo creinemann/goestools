@@ -288,9 +288,11 @@ filename = "Himawari9_FD_FC_{time:%Y%m%dT%H%M%SZ}"
 format = "jpg"
 json = false
 
-  # Optional contrast curve for the visible channel, as for ch02.
+  # Himawari VS is ~2.6x darker than GOES ch02; this curve brightens
+  # it and then applies the wxstar ch02 curve, so GOES-tuned LUTs fit.
+  # Regenerate with scripts/make_himawari_vs_curve.py to change the gain.
   [handler.remap.vs]
-  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/wxstar/wxstar_goes16_ch02_curve.png"
+  path = "${CMAKE_INSTALL_PREFIX}/share/goestools/usradioguy/himawari9_vs_curve.png"
 
   # USRadioguy custom LUT. Swap in usradioguy_night_lut.png to keep
   # cold cloud tops visible on the night side of the disk.

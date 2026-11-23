@@ -21,6 +21,7 @@ from PIL import Image
 NIGHT_CLOUD = (150, 168, 196)   # colour of the coldest night cloud tops
 NIGHT_SKY   = (4, 8, 20)        # night-side background (clear sky)
 CLOUD_FROM, CLOUD_TO = 0.30, 0.85   # IR coldness range clouds fade in over
+SPACE_TO = 0.10                     # IR counts below this fade to black (space)
 FADE_FROM, FADE_TO = 0.02, 0.16     # visible range over which night fades out
 # ---------------------------------------------------------------------
 
@@ -38,6 +39,8 @@ v, t = y / 255.0, x / 255.0
 cloud_w = smooth(CLOUD_FROM, CLOUD_TO, t)[..., None]
 night = np.array(NIGHT_SKY) + (np.array(NIGHT_CLOUD) - np.array(NIGHT_SKY)) * cloud_w
 night_w = (1.0 - smooth(FADE_FROM, FADE_TO, v))[..., None]
+# Off-disk space reads ~0 in both channels: keep it black.
+night_w = night_w * smooth(0.0, SPACE_TO, t)[..., None]
 
 # Never darken the base LUT: take the brighter of base and night layer.
 out = np.maximum(base, night * night_w)
