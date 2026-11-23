@@ -5,6 +5,7 @@ Tools to work with signals and files from GOES satellites.
 > **USRadioguy fork** ([usradioguy.com](https://usradioguy.com)) of
 > [pietern/goestools](https://github.com/pietern/goestools).
 > This is a significant update. Includes updates for GOES 18,19 and Himawari-9
+> NOTE: I used AI- Claude to help streamline and check code.
 > **See [USRADIOGUY.md](USRADIOGUY.md) for everything that's new**, and
 > [the Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
 > Builds on current systems (CMake 4, OpenCV 4, PROJ 9, Raspberry Pi
