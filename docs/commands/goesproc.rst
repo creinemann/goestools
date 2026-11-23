@@ -58,43 +58,33 @@ For example, with the following configuration file:
 
    [[handler]]
    type = "image"
-   product = "goes15"
-   region = "fd"
-   channels = [ "VS" ]
-   crop = [ -2373, 2371, -1357, 1347 ]
-   filename = "GOES15_%r_%c_%t"
+   origin = "goes19"
+   regions = [ "fd" ]
+   channels = [ "ch13" ]
+   directory = "./goes19/fd/ch13"
+   filename = "GOES19_{region:short}_{channel:short}_{time:%Y%m%dT%H%M%SZ}"
+   format = "jpg"
 
-
-Running goesproc against a directory with GOES-15 LRIT files
-results in a number of image files of the full disk visual channel:
+Subscribing to a running goesrecv on the same machine results in a full
+disk image of ABI channel 13 (clean longwave infrared) every 10 minutes:
 
 .. code-block:: shell
 
-   $ goesproc --config example.conf --mode lrit ./out/images/goes15/fd
-   Writing ./GOES15_FD_VS_20170820-210600.png
-   Writing ./GOES15_FD_VS_20170821-000600.png
-   Writing ./GOES15_FD_VS_20170821-030600.png
-   Writing ./GOES15_FD_VS_20170821-060600.png
-   Writing ./GOES15_FD_VS_20170821-090600.png
-   Writing ./GOES15_FD_VS_20170821-120600.png
-   Writing ./GOES15_FD_VS_20170821-150600.png
-   Writing ./GOES15_FD_VS_20170821-180600.png
+   $ goesproc --config example.conf -m packet --subscribe tcp://127.0.0.1:5004
+   Writing: ./goes19/fd/ch13/GOES19_FD_CH13_20261123T200020Z.jpg (took 0.912s)
+   Writing: ./goes19/fd/ch13/GOES19_FD_CH13_20261123T201020Z.jpg (took 0.905s)
    ...
 
 You can now use these image files however you like. For example, to
-produce a GIF from 8 consecutive full disk images, you can use the
+produce a GIF from a few consecutive full disk images, you can use the
 following ImageMagick_ commands:
 
 .. _ImageMagick: https://www.imagemagick.org/
 
 .. code-block:: shell
 
-   $ mogrify -resize '640x480>' *.png
-   $ convert -loop 0 -delay 50 *.png GOES15_FD_VS_20170821.gif
-
-And get:
-
-.. image:: /images/GOES15_FD_VS_20170821.gif
+   $ mogrify -resize '640x640>' *.jpg
+   $ convert -loop 0 -delay 50 *.jpg GOES19_FD_CH13.gif
 
 Sample configuration
 ====================

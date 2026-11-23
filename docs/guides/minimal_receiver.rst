@@ -71,21 +71,20 @@ in some SDRs)
 
    A similar grid dish antenna works for me at my location (San
    Francisco Bay Area; the exact antenna is no longer available).
-   I can receive GOES-15 at its west location
-   (135 degrees west), GOES-16 at its east location (75 degrees west),
-   and GOES-17 at its checkout location (89 degrees west). GOES-16 is
-   furthest away and at 25 degrees elevation at my location.
 
-   If your location has the satellite you're interested in at a lower
-   elevation than 25 degrees, you may need a bigger dish. However,
-   even with any satellite at a higher elevation, there are other
+   The HRIT downlink (1694.1 MHz) is now broadcast by GOES-19 (East,
+   75.2 degrees west) and GOES-18 (West, 137.0 degrees west). Older
+   GOES satellites no longer transmit.
+
+   If your location has the satellite you're interested in at a low
+   elevation (below about 25 degrees), you may need a bigger dish.
+   However, even with any satellite at a higher elevation, there are other
    factors that can impact whether or not you can use the dish
    mentioned here (blocked line of sight, local interference, etc).
 
    Find your local azimuth and elevation on `Satview`_
-   (`GOES-15 <http://www.satview.org/?sat_id=36411U>`_,
-   `GOES-16 <http://www.satview.org/?sat_id=41866U>`_,
-   `GOES-17 <http://www.satview.org/?sat_id=43226U>`_).
+   (`GOES-19 <http://www.satview.org/?sat_id=60133U>`_,
+   `GOES-18 <http://www.satview.org/?sat_id=51850U>`_).
 
 .. _satview: http://www.satview.org/
 

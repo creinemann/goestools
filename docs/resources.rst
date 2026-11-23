@@ -24,6 +24,12 @@ by NOAA until ~2020. They're mirrored here for posterity.
 * :download:`4_LRIT_Transmitter-specs.pdf <files/4_LRIT_Transmitter-specs.pdf>`
 * :download:`5_LRIT_Mission-data.pdf <files/5_LRIT_Mission-data.pdf>`
 
+The number one resource for running goestools today is USRadioguy's
+blog series: setup, configuration, custom color LUTs and processing for
+GOES-18, GOES-19 and Himawari-9 reception on the Raspberry Pi:
+
+* https://usradioguy.com
+
 The blog series by Lucas Teske is a great resource:
 
 * http://www.teske.net.br/lucas/2016/10/goes-satellite-hunt-part-1-antenna-system/

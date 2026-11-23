@@ -37,23 +37,51 @@ Bundled dependencies:
 
 ## Build
 
+Install the system dependencies (Raspberry Pi OS / Raspbian, Debian,
+Ubuntu):
+
+``` shell
+sudo apt install -y git build-essential cmake pkg-config zlib1g-dev \
+  libopencv-dev libproj-dev librtlsdr-dev
+```
+
+Add `libairspy-dev` if you use an Airspy. On old Raspbian releases
+(Buster and earlier) some packages may no longer download; leave out
+any you don't need.
+
+Then build and install:
+
 ``` shell
 git clone --recursive https://github.com/creinemann/goestools
 cd goestools
 mkdir -p build
 cd build
-cmake ../ -DCMAKE_INSTALL_PREFIX=/usr/local
-make -j4
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release
+make -j2
 sudo make install
 ```
+
+* **Upgrading?** Use the same prefix as your existing install
+  (`which goesrecv` → `/usr/bin` means `-DCMAKE_INSTALL_PREFIX=/usr`),
+  otherwise you end up with two copies. `make install` never overwrites
+  an existing `share/goestools/goesproc-goesr.conf`.
+* Raspberry Pi receivers: see the
+  [Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
+* Use `make -j2` on a Pi 3 (more parallel jobs can run out of memory).
 
 ## Usage
 
 ### goesrecv
 
-As of February 2018 goesrecv only runs ARM processors with NEON
-extensions (such as the Raspberry Pi 3). Stay tuned for compilation
-instructions...
+goesrecv demodulates and decodes the HRIT signal from an RTL-SDR or
+Airspy and publishes the packet stream (and live signal statistics) on
+the network. It runs on x86 and on ARM (Raspberry Pi; NEON is used
+when available). See [etc/goesrecv.conf](etc/goesrecv.conf) for an
+example configuration and `goesrecv --help` for options.
+
+The HRIT downlink (1694.1 MHz) is broadcast by **GOES-19** (East,
+75.2° W) and **GOES-18** (West, 137.0° W). GOES-18 also relays
+**Himawari-9** imagery. Older GOES satellites no longer transmit.
 
 ### goeslrit
 
@@ -146,38 +174,29 @@ For example, with the following configuration file:
 ``` toml
 [[handler]]
 type = "image"
-product = "goes15"
-region = "fd"
-channels = [ "VS" ]
-crop = [ -2373, 2371, -1357, 1347 ]
-filename = "GOES15_%r_%c_%t"
+origin = "goes19"
+regions = [ "fd" ]
+channels = [ "ch13" ]
+directory = "./goes19/fd/ch13"
+filename = "GOES19_{region:short}_{channel:short}_{time:%Y%m%dT%H%M%SZ}"
+format = "jpg"
 ```
 
-Running goesproc against a directory with GOES-15 LRIT files:
+Subscribing to a running goesrecv on the same machine writes a full
+disk image of ABI channel 13 every 10 minutes:
 
 ``` shell
-$ goesproc --config example.conf --mode lrit ./out/images/goes15/fd
-Writing ./GOES15_FD_VS_20170820-210600.png
-Writing ./GOES15_FD_VS_20170821-000600.png
-Writing ./GOES15_FD_VS_20170821-030600.png
-Writing ./GOES15_FD_VS_20170821-060600.png
-Writing ./GOES15_FD_VS_20170821-090600.png
-Writing ./GOES15_FD_VS_20170821-120600.png
-Writing ./GOES15_FD_VS_20170821-150600.png
-Writing ./GOES15_FD_VS_20170821-180600.png
+$ goesproc --config example.conf -m packet --subscribe tcp://127.0.0.1:5004
+Writing: ./goes19/fd/ch13/GOES19_FD_CH13_20261123T200020Z.jpg (took 0.912s)
+Writing: ./goes19/fd/ch13/GOES19_FD_CH13_20261123T201020Z.jpg (took 0.905s)
 ...
 ```
 
-You can now use these image files however you like. For example, to
-produce a GIF from 8 consecutive full disk images, you can use the
-following ImageMagick commands:
-
-``` shell
-mogrify -resize '640x480>' *.png
-convert -loop 0 -delay 50 *.png GOES15_FD_VS_20170821.gif
-```
-
-![GOES15_FD_VS_20170821.gif](./images/GOES15_FD_VS_20170821.gif)
+A complete configuration for GOES-18, GOES-19 and Himawari-9 (false
+color, enhanced IR, water vapor, EMWIN, NWS text) is installed as
+`share/goestools/goesproc-goesr.conf.example`. The configs the
+USRadioguy station runs are in
+[share/usradioguy/examples](share/usradioguy/examples).
 
 ## Resources
 
@@ -192,6 +211,7 @@ see https://github.com/pietern/goestools/pull/102).
 
 Also, these blog series:
 
+* **https://usradioguy.com**: USRadioguy's goestools guides for GOES-18, GOES-19 and Himawari-9 reception on the Raspberry Pi, including setup, configuration, custom color LUTs and processing
 * https://web.archive.org/web/20150426214432/http://www.acasper.org/2011/10/24/goes-satellite-decoding/
 * http://www.teske.net.br/lucas/2016/10/goes-satellite-hunt-part-1-antenna-system/
 

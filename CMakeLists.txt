@@ -113,8 +113,8 @@ if(${BUILD_GOESLRIT})
   add_subdirectory(src/goeslrit)
 endif()
 
-# Disable goesemwin by default because it won't be relevant once
-# GOES-15 is replaced by GOES-17 in late 2018.
+# goesemwin is off by default: it decoded the stand-alone EMWIN signal
+# of the retired GOES-N satellites. EMWIN on HRIT is handled by goesproc.
 option(BUILD_GOESEMWIN "Build goesemwin" OFF)
 if(${BUILD_GOESEMWIN})
   add_subdirectory(src/goesemwin)
@@ -123,16 +123,6 @@ endif()
 option(BUILD_GOESPROC "Build goesproc" ON)
 if(${BUILD_GOESPROC})
   add_subdirectory(src/goesproc)
-
-  # Process and install GOES-N series example config
-  configure_file(
-    share/goesproc-goesn.conf.in
-    "${PROJECT_BINARY_DIR}/share/goesproc-goesn.conf")
-  install(
-    FILES "${PROJECT_BINARY_DIR}/share/goesproc-goesn.conf"
-    DESTINATION share/goestools
-    RENAME goesproc-goesn.conf.example
-    COMPONENT goestools)
 
   # Process and install GOES-R series example config.
   # Installed as *.example so "make install" never overwrites a live
