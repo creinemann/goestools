@@ -1,5 +1,7 @@
 #include "handler_himawari8.h"
 
+#include <sstream>
+
 #include <util/error.h>
 #include <util/string.h>
 
@@ -23,10 +25,10 @@ std::string normalizeChannel(const std::string& in) {
   if (s == "B03" || s == "VIS") {
     return "VS";
   }
-  if (s == "B13") {
+  if (s == "B13" || s == "IR1") {
     return "IR";
   }
-  if (s == "B08") {
+  if (s == "B08" || s == "IR3") {
     return "WV";
   }
   return s;
@@ -53,6 +55,13 @@ Himawari8ImageHandler::Himawari8ImageHandler(
     remap[normalizeChannel(it.first)] = it.second;
   }
   config_.remap = std::move(remap);
+
+  // Same for gradients ([handler.gradient.wv], [handler.gradient.b08], ...)
+  std::map<std::string, Gradient> gradient;
+  for (const auto& it : config_.gradient) {
+    gradient[normalizeChannel(it.first)] = it.second;
+  }
+  config_.gradient = std::move(gradient);
 }
 
 bool Himawari8ImageHandler::matchChannel(const Channel& channel) const {
@@ -146,12 +155,102 @@ void Himawari8ImageHandler::handle(std::shared_ptr<const lrit::File> f) {
   fb.region = region;
   fb.channel = channel;
 
+  applyGradient(*first, channel, *image);
+
   auto mat = image->getRawImage();
   overlayMaps(*f, mat);
   auto path = fb.build(config_.filename, config_.format);
   fileWriter_->write(path, mat, &t);
   if (config_.json) {
     fileWriter_->writeHeader(*first, path);
+  }
+}
+
+std::array<float, 256> Himawari8ImageHandler::loadImageDataFunction(
+    const lrit::File& f) {
+  std::array<float, 256> out;
+  out.fill(-1.0f);
+  if (!f.hasHeader<lrit::ImageDataFunctionHeader>()) {
+    return out;
+  }
+
+  // Example (Himawari-9 band 8 relayed over GOES-West HRIT):
+  //   $HALFTONE:=8\r_NAME:=INFRARED\r_UNIT:=KELVIN\r
+  //   0:=330.00\r1:=302.72\r253:=193.58\r254:=0.00\r255:=0.00\r
+  // Lines may end in \r and/or \n.
+  auto h = f.getHeader<lrit::ImageDataFunctionHeader>();
+  std::string str((const char*) h.data.data(), h.data.size());
+  for (auto& c : str) {
+    if (c == '\r') {
+      c = '\n';
+    }
+  }
+
+  std::map<int, float> points;
+  std::istringstream iss(str);
+  std::string line;
+  while (std::getline(iss, line)) {
+    auto pos = line.find(":=");
+    if (pos == std::string::npos) {
+      continue;
+    }
+    try {
+      int k = std::stoi(line.substr(0, pos));
+      float v = std::stof(line.substr(pos + 2));
+      // 0 K marks fill/off-disk levels; keep only real temperatures.
+      if (k >= 0 && k < 256 && v > 0.0f) {
+        points[k] = v;
+      }
+    } catch (const std::exception&) {
+      // Non-numeric keys ($HALFTONE, _NAME, _UNIT)
+    }
+  }
+
+  if (points.empty()) {
+    return out;
+  }
+
+  // Linear interpolation between consecutive anchor points.
+  auto it = points.begin();
+  auto next = std::next(it);
+  out[it->first] = it->second;
+  for (; next != points.end(); ++it, ++next) {
+    const int k0 = it->first, k1 = next->first;
+    const float v0 = it->second, v1 = next->second;
+    for (int k = k0; k <= k1; k++) {
+      out[k] = v0 + (v1 - v0) * float(k - k0) / float(k1 - k0);
+    }
+  }
+  return out;
+}
+
+void Himawari8ImageHandler::applyGradient(
+    const lrit::File& f,
+    const Channel& channel,
+    Image& image) const {
+  auto grad = config_.gradient.find(channel.nameShort);
+  if (grad == std::end(config_.gradient)) {
+    return;
+  }
+
+  auto idf = loadImageDataFunction(f);
+  cv::Mat gradientMap(256, 1, CV_8UC3, cv::Scalar(0, 0, 0));
+  bool any = false;
+  for (int i = 0; i < 256; i++) {
+    if (idf[i] <= 0.0f) {
+      continue;  // off-disk / no calibration: leave black
+    }
+    any = true;
+    auto p = grad->second.interpolate(idf[i], config_.lerptype);
+    gradientMap.data[i * 3] = p.rgb[2] * 255;
+    gradientMap.data[i * 3 + 1] = p.rgb[1] * 255;
+    gradientMap.data[i * 3 + 2] = p.rgb[0] * 255;
+  }
+
+  // Without calibration data a gradient can't be applied meaningfully;
+  // leave the image grey rather than guess.
+  if (any) {
+    image.remap(gradientMap);
   }
 }
 

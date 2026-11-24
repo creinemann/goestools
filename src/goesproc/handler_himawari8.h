@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <unordered_map>
 
 #include "config.h"
@@ -15,6 +16,9 @@
 //   channels = [ "vs", "ir" ]        (also accepts "b03", "b13", "b08")
 //   [handler.remap.<channel>]        contrast curve per channel
 //   [handler.lut]                    2-channel false color LUT
+//   [handler.gradient.<channel>]     color enhancement in Kelvin, using
+//                                    the image data function (calibration)
+//                                    sent with each Himawari image
 class Himawari8ImageHandler : public Handler {
 public:
   explicit Himawari8ImageHandler(
@@ -30,6 +34,15 @@ protected:
   void overlayMaps(const lrit::File& f, cv::Mat& mat);
 
   bool matchChannel(const Channel& channel) const;
+
+  // Grey level -> brightness temperature (Kelvin) from the LRIT image
+  // data function. Himawari only lists a few anchor points (e.g.
+  // 0:=330.00, 1:=302.72, 253:=193.58, 254:=0.00); levels in between
+  // are interpolated linearly. Levels with no valid temperature
+  // (off-disk / missing) map to a negative value.
+  static std::array<float, 256> loadImageDataFunction(const lrit::File& f);
+
+  void applyGradient(const lrit::File& f, const Channel& channel, Image& image) const;
 
   std::unique_ptr<Image> buildImage(
     const std::vector<std::shared_ptr<const lrit::File>>& files,

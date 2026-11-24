@@ -77,6 +77,41 @@ Other Himawari changes:
 * Space outside the disk stays black in false color instead of being
   drawn as cold cloud.
 
+### Himawari-9 enhanced water vapor
+The Himawari handler now supports `[handler.gradient.<channel>]`, the
+same Kelvin-based color enhancement used for GOES (for example ch08 and
+ch09). Each relayed Himawari image carries a calibration table, the
+LRIT image data function, for example
+`0:=330.00 1:=302.72 253:=193.58 254:=0.00`. Himawari lists only a few
+anchor points, so the levels between them are interpolated, and levels
+marked 0 K (off-disk) stay black.
+
+The relayed water vapor image is Himawari **band 8 (6.2 µm)**, the same
+upper-level band as GOES ch08, so a ch08 gradient fits it directly:
+
+```toml
+[[handler]]
+type = "image"
+origin = "himawari8"
+channels = [ "wv" ]           # also "b08" or "ir3"
+directory = "./himawari9/{region:short|lower}/wv_enhanced/{time:%Y-%m-%d}"
+filename = "Himawari9_{region:short}_WVENH_{time:%Y%m%dT%H%M%SZ}"
+format = "jpg"
+
+  [handler.gradient.wv]
+  points = [
+    { units = 276, color = "#000000" },
+    { units = 275.9, color = "#ff0000" },
+    { units = 258, color = "#ffff00" },
+    { units = 250, color = "#000070" },
+    { units = 233, color = "#ffffff" },
+    { units = 195, color = "#408020" },
+    { units = 188, color = "#00ffff" }
+  ]
+```
+Gradients work on the `ir` channel as well. For example,
+`[handler.gradient.ir]` takes the same points as a GOES ch13 enhancement.
+
 ### False color lookup tables
 ![The three LUTs (rows = visible, columns = infrared, colder to the right)](docs/images/usradioguy_luts.png)
 
