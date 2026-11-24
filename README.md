@@ -9,11 +9,8 @@ Tools to work with signals and files from GOES satellites.
 > **See [USRADIOGUY.md](USRADIOGUY.md) for everything that's new**, and
 > [the Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
 > Builds on current systems (CMake 4, OpenCV 4, PROJ 9, Raspberry Pi
-> Buster), fixes map overlays, adds **Himawari-9 false color**, night-side
-> LUTs, and a safe `make install`.
-> 
-> **See [USRADIOGUY.md](USRADIOGUY.md) for everything that's new**, and
-> [the Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
+> Buster), fixes map overlays, adds **Himawari-9 false color** and
+> **enhanced water vapor**, night-side LUTs, and a safe `make install`.
 
 ![GOES-19 and Himawari-9 false color from Horicon, WI](docs/images/usradioguy_before_after.jpg)
 
