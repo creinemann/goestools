@@ -5,6 +5,7 @@ This is the [USRadioguy](https://usradioguy.com) fork of
 two-receiver ground station in Horicon, Wisconsin: GOES-19 (East) and
 GOES-18 (West, which also relays Himawari-9), each on its own
 Raspberry Pi.
+![Screen Grab of Web interface](docs/images/2026-11-24-115636.jpg)
 
 Everything here is a drop-in replacement for upstream goestools. Your
 existing `goesrecv.conf` and `goesproc-goesr.conf` keep working.
