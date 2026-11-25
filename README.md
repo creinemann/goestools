@@ -8,6 +8,7 @@ Tools to work with signals and files from GOES satellites.
 > NOTE: I used AI- Claude to help streamline and check code.
 > **See [USRADIOGUY.md](USRADIOGUY.md) for everything that's new**, and
 > [the Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md).
+> **Already running it? [How to update](USRADIOGUY.md#updating).**
 > Builds on current systems (CMake 4, OpenCV 4, PROJ 9, Raspberry Pi
 > Buster), fixes map overlays, adds **Himawari-9 false color** and
 > **enhanced water vapor**, night-side LUTs, and a safe `make install`.
@@ -55,7 +56,10 @@ make -j2
 sudo make install
 ```
 
-* **Upgrading?** Use the same prefix as your existing install
+* **Updating an existing USRadioguy install?** Follow
+  [Updating in USRADIOGUY.md](USRADIOGUY.md#updating):
+  `git pull` → `make -j2` → `sudo make install` → restart goestools.
+* **Upgrading from the original goestools?** Use the same prefix as your existing install
   (`which goesrecv` → `/usr/bin` means `-DCMAKE_INSTALL_PREFIX=/usr`),
   otherwise you end up with two copies. `make install` never overwrites
   an existing `share/goestools/goesproc-goesr.conf`.

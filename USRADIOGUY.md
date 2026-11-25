@@ -210,6 +210,97 @@ running the old one.
 
 ---
 
+## Updating
+
+New features and fixes land here regularly. First, find which kind of
+install you have:
+
+| You installed with… | Follow |
+|---|---|
+| The **USRadioguy GOESTOOLS Ground Station** installer (`install.sh`, project in `/opt/groundstation`) | **A** |
+| **This goestools**, built yourself with `git clone` + `cmake` | **B** |
+| The **original** goestools (pietern), or a very old build | **C** |
+
+Not sure? Run `ls /opt/groundstation`. If the folder exists, it's **A**.
+Otherwise, run `ls -d ~/goestools*` to find your build folder, then
+`git -C <that folder> remote -v`. If it shows `creinemann/goestools`,
+it's **B**.
+
+### A. Ground Station installs: one command
+```sh
+cd /opt/groundstation && git pull && ./install.sh
+```
+Press **Enter** at each question. It remembers your answers from last
+time. The installer downloads and builds the newest goestools, updates
+the website, and restarts everything. **Your settings are kept.** When a
+config file has changed, the new version is saved next to yours with
+`.new` on the end so you can compare.
+
+### B. goestools you built yourself: 4 steps
+Your receiver keeps running while it builds, about 10–15 minutes on a Pi 4.
+
+**1. Get the new code.** Go to the folder you built in. If you followed
+the Pi upgrade guide, that's `~/goestools-usradioguy`; otherwise it's
+usually `~/goestools`:
+```sh
+cd ~/goestools-usradioguy        # or: cd ~/goestools
+git pull
+git submodule update --init --recursive
+```
+
+**2. Build it:**
+```sh
+cd build
+make -j2
+```
+Wait for the prompt to come back. The last lines should end at `[100%]`
+with no `Error`.
+
+**3. Install it:**
+```sh
+sudo make install
+```
+This uses the same install location as before (`/usr` or `/usr/local`).
+It **never overwrites your `goesproc-goesr.conf`**. New example configs
+are saved as `.example` files, and new color tables (LUTs) and curves
+are added to `share/goestools/usradioguy/`.
+
+**4. Restart goestools** so the new version runs:
+* Started by **systemd** (`systemctl status goesrecv` shows it):
+  `sudo systemctl restart goesrecv goesproc`
+* Started from **`/etc/rc.local`** or **`screen`**: `sudo reboot`
+
+**Check it worked:**
+```sh
+goesproc --version
+ps aux | grep -E "goes(recv|proc)" | grep -v grep
+```
+You should see one `goesrecv` and one `goesproc` running. Imagery
+continues with the next scan.
+
+**New features may need a config change.** An update adds new
+abilities, but your own `goesproc-goesr.conf` stays as you left it. To
+use something new (for example the Himawari color table), see what's
+new above and compare your config with the example in
+`share/goestools/usradioguy/examples/`.
+
+### C. Coming from the original goestools
+Follow the **[Pi upgrade guide](docs/guides/usradioguy_pi_upgrade.md)**.
+It covers backups, matching your install location, `rc.local`/`screen`
+setups, and how to roll back.
+
+### If something goes wrong
+* **Build error:** in your build folder, run `cd build && cmake .. && make -j2` and
+  check the last 20 lines. Your old goestools is still installed and
+  still running, because nothing changes until `sudo make install`.
+* **Two copies installed:** `which -a goesrecv` lists more than one when
+  the old and new versions use different locations. See "Use the same
+  install prefix" above.
+* Questions? Open an issue on GitHub or ask on
+  [usradioguy.com](https://usradioguy.com).
+
+---
+
 ## Credits
 goestools was written by Pieter Noordhuis and contributors. The
 USRadioguy changes are by Carl Reinemann
