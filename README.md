@@ -1,7 +1,7 @@
-# goestools
+# goestools UPDATED VER
 
 Tools to work with signals and files from GOES satellites.
-
+![Short description of the picture](docs/images/high-tech-futuristic-hud-collage-3.jpg)
 > **USRadioguy fork** ([usradioguy.com](https://usradioguy.com)) of
 > [pietern/goestools](https://github.com/pietern/goestools).
 > This is a significant update. Includes updates for GOES 18,19 and Himawari-9
@@ -13,14 +13,6 @@ Tools to work with signals and files from GOES satellites.
 > **enhanced water vapor**, night-side LUTs, and a safe `make install`.
 
 ![GOES-19 and Himawari-9 false color from Horicon, WI](docs/images/usradioguy_before_after.jpg)
-
-I started writing this to learn about things involved in the GOES
-communication pipeline and in the process learn more about space
-communication standards. Everything is written in C++ to strike a
-balance between usability (no need for yet another hash table in C)
-and performance. ~~Eventually it would be nice to run the entire RX
-pipeline on a little ARM board.~~ The entire RX pipeline can run on a
-Raspberry Pi 3.
 
 ## Requirements
 
