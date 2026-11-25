@@ -73,6 +73,17 @@ Without the curves, any LUT made for GOES turns Himawari's land orange
 or red and its day side murky. The curves were calibrated on real
 imagery from both satellites.
 
+**Natural land colors (Himawari LUT).** The USRadioguy LUTs color the
+hottest land (the warmest infrared) deep red. GOES-19 rarely sees land
+that hot. Himawari-9 looks straight at the Australian outback, whose
+surface tops 330 K around midday, so the whole continent turned deep
+orange-red. `himawari9_night_lut.png` is the same night LUT with only
+the land colors repainted, hottest first: red ochre, desert tan, khaki,
+then olive green. Ocean, cloud and night colors are unchanged. Make
+your own from any LUT with `scripts/make_himawari_lut.py`.
+
+![Himawari-9 over Australia: USRadioguy night LUT (left) and the Himawari LUT (right)](docs/images/himawari9_land_before_after.jpg)
+
 Other Himawari changes:
 * The handler now **obeys a `channels` filter** (older versions ignored it).
 * Space outside the disk stays black in false color instead of being
@@ -125,6 +136,8 @@ Installed in `share/goestools/usradioguy/`:
 | `usradioguy_natural_lut.png` | Experimental, built from scratch |
 | `himawari9_vs_curve.png` | Himawari visible curve (see above) |
 | `himawari9_ir_curve.png` | Himawari infrared curve (see above) |
+| `himawari9_night_lut.png` | Night LUT with natural Himawari land colors (see below) |
+| `himawari9_lut.png` | Day-only version of the same |
 
 Each one can be regenerated or tuned with a script in `scripts/`:
 
