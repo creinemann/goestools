@@ -149,6 +149,25 @@ them to your own setup before use.
 
 ---
 
+## The complete ground station
+Want the whole station, not just goestools? The companion
+[USRadioguy GOESTOOLS Ground Station](https://github.com/creinemann/USRadioguy_GOESTOOLS_Groundstation)
+package installs this goestools on a Raspberry Pi with one script.
+It also sets up a website you can open from any browser on your
+network. Step-by-step guide:
+[Installing USRadioguy goestools on a Raspberry Pi](https://usradioguy.com/installing-usradioguy-goestools-on-a-raspberry-pi/).
+
+![The Lab view: latest GOES-19 full disk, product buttons, a 24-hour timeline and loop playback](docs/images/2026-11-24-115636.jpg)
+
+*The Lab view: the latest image from each satellite, a 24-hour
+timeline, loop playback and live receiver status.*
+
+![The Ground Station HUD: signal lock, Viterbi and packet-rate history, decoder stats and Raspberry Pi health](docs/images/2026-11-24-120057.jpg)
+
+*The Ground Station HUD: live signal lock, Viterbi errors, packet
+rate, an event log, and the receiver Pi's CPU, temperature, memory and
+disk.*
+
 ## Install or upgrade
 
 ### New install
