@@ -20,6 +20,50 @@ on the right. All received in Horicon on 23 Nov 2026.*
 
 ## What's new
 
+### USRG_GeoColor: natural Earth colors (new, 26 Nov 2026)
+![USRadioguy LUT (top) and USRG_GeoColor (bottom): GOES-19, GOES-18 and Himawari-9, received in Horicon](docs/images/usrg_geocolor.jpg)
+
+HRIT carries only one visible band (red), so a classic false color LUT
+has to guess land colors from brightness and temperature. It often
+paints land like ocean, deserts red, or the whole US green in November.
+**USRG_GeoColor** fixes the land:
+
+* A fixed **land mask** for each satellite (Natural Earth coastlines)
+  says exactly which pixels are land.
+* On land, the color comes from **NASA's Blue Marble Next Generation**
+  for the time of year. goesproc blends the two nearest months by date,
+  so November eases into December, and the Southern Hemisphere gets its
+  own season automatically.
+* **All brightness is still live** from the visible channel. Shadows,
+  haze and day/night are real. Very bright land (snow, salt flats) fades
+  to white.
+* **Clouds, ocean and the night side** keep the LUT's colors, so the
+  weather looks exactly as before.
+* Works for **GOES-19, GOES-18 and Himawari-9**, full disk only.
+  Mesoscale images keep the LUT colors.
+
+Add it to any 2-channel false color handler:
+
+```toml
+  [handler.lut]
+  path = "/usr/share/goestools/usradioguy/usradioguy_lut.png"
+
+  [handler.geocolor]
+  path = "/usr/share/goestools/usradioguy/geocolor"
+  satellite = "goes19"     # goes19, goes18 or himawari9
+  strength = 1.0           # 1.0 = Blue Marble colors as they are
+```
+
+The data (land masks plus 12 monthly tints per satellite, 4.7 MB) is
+installed with goestools. Rebuild it with
+`scripts/make_geocolor_data.py`. In the Horicon station configs,
+USRG_GeoColor replaces the USRadioguy LUT product: images go to
+`fd/USRG_GeoColor/` and are named `..._USRG_GeoColor_...`. It adds a few
+seconds per full disk on a Pi 4 and needs about 150 MB of free memory
+while it runs.
+
+Blue Marble imagery: NASA Earth Observatory, Reto Stöckli (public domain).
+
 ### Builds on today's systems
 * Works with CMake 3.10 through **CMake 4.x**. The original no longer
   configures on CMake 4.
@@ -78,11 +122,15 @@ hottest land (the warmest infrared) deep red. GOES-19 rarely sees land
 that hot. Himawari-9 looks straight at the Australian outback, whose
 surface tops 330 K around midday, so the whole continent turned deep
 orange-red. `himawari9_night_lut.png` is the same night LUT with only
-the land colors repainted, hottest first: red ochre, desert tan, khaki,
-then olive green. Ocean, cloud and night colors are unchanged. Make
-your own from any LUT with `scripts/make_himawari_lut.py`.
+the land colors repainted, hottest first: red ochre/rust, rust-brown,
+brown-tan, then dry grass. Ocean, cloud and night colors are unchanged.
+The first version (25 Nov) came out peach at Australian noon; on 26 Nov
+it was retuned against NASA Blue Marble's outback color. Make your own
+from any LUT with `scripts/make_himawari_lut.py`. With USRG_GeoColor
+turned on, this LUT does Himawari's ocean, clouds and night side, and
+USRG_GeoColor does the land.
 
-![Himawari-9 over Australia: USRadioguy night LUT (left) and the Himawari LUT (right)](docs/images/himawari9_land_before_after.jpg)
+![Himawari-9 at Australian noon: old LUT, first Himawari LUT, retuned, and Blue Marble for reference](docs/images/himawari9_noon_retune.jpg)
 
 Other Himawari changes:
 * The handler now **obeys a `channels` filter** (older versions ignored it).
@@ -136,8 +184,9 @@ Installed in `share/goestools/usradioguy/`:
 | `usradioguy_natural_lut.png` | Experimental, built from scratch |
 | `himawari9_vs_curve.png` | Himawari visible curve (see above) |
 | `himawari9_ir_curve.png` | Himawari infrared curve (see above) |
-| `himawari9_night_lut.png` | Night LUT with natural Himawari land colors (see below) |
+| `himawari9_night_lut.png` | Night LUT with natural Himawari land colors (see below). Retuned 26 Nov 2026 to rust-brown outback (was peach at noon) |
 | `himawari9_lut.png` | Day-only version of the same |
+| `geocolor/` | USRG_GeoColor data: land masks, monthly Blue Marble tints, luminance |
 
 Each one can be regenerated or tuned with a script in `scripts/`:
 
@@ -147,6 +196,7 @@ Each one can be regenerated or tuned with a script in `scripts/`:
 | `make_himawari_vs_curve.py WXSTAR_CURVE.png OUT.png [GAIN]` | The Himawari visible curve |
 | `calibrate_himawari_ir.py OUT.png --goes ... --himawari ...` | Recalibrates the Himawari IR curve from your own images |
 | `make_natural_lut.py [OUT.png]` | The experimental natural LUT |
+| `make_geocolor_data.py BLUE_MARBLE_DIR OUT_DIR` | The USRG_GeoColor data, from NASA's 12 monthly Blue Marble images |
 
 The scripts need Python 3 with `numpy` and `Pillow`.
 

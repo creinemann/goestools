@@ -8,6 +8,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "area.h"
+#include "geocolor.h"
 #include "gradient.h"
 
 struct Config {
@@ -67,6 +68,10 @@ struct Config {
 
     // Lookup table to use to generate false color images
     cv::Mat lut;
+
+    // USRG_GeoColor: natural land colors for full disk false color
+    // (see geocolor.h). Empty path = off.
+    geocolor::Settings geocolor;
 
     // Filename format (see filename.cc for more info)
     std::string filename;

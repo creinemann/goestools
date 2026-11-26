@@ -324,6 +324,30 @@ bool loadHandlers(const toml::Value& v, Config& out) {
       h.lut = img;
     }
 
+    auto tgeo = th->find("geocolor");
+    if (tgeo) {
+      h.geocolor.path = tgeo->get<std::string>("path");
+      auto sat = tgeo->find("satellite");
+      if (sat) {
+        h.geocolor.satellite = sat->as<std::string>();
+      }
+      auto strength = tgeo->find("strength");
+      if (strength) {
+        h.geocolor.strength = strength->is<int>() ? strength->as<int>() : strength->as<double>();
+      }
+      if (h.geocolor.satellite.empty()) {
+        out.ok = false;
+        out.error = "geocolor needs satellite = \"goes19\", \"goes18\" or \"himawari9\"";
+        return false;
+      }
+      auto test = cv::imread(h.geocolor.path + "/" + h.geocolor.satellite + "_land.png", cv::IMREAD_GRAYSCALE);
+      if (!test.data) {
+        out.ok = false;
+        out.error = "geocolor: no " + h.geocolor.satellite + "_land.png in " + h.geocolor.path;
+        return false;
+      }
+    }
+
     auto filename = th->find("filename");
     if (filename) {
       // To keep this readable, it can be specified as a list.
@@ -345,6 +369,12 @@ bool loadHandlers(const toml::Value& v, Config& out) {
     }
 
     // Sanity check
+    if (h.geocolor.enabled() && !h.lut.data) {
+      out.ok = false;
+      out.error = "geocolor works on a false color handler: also set [handler.lut]";
+      return false;
+    }
+
     if (h.lut.data && h.channels.size() != 2) {
       out.ok = false;
       out.error = "Using a false color table requires selecting 2 channels";

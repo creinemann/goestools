@@ -9,7 +9,9 @@ whole continent turned deep orange-red around local noon.
 This keeps the LUT's ocean, cloud and night colors exactly as they are,
 and repaints only the land columns (warm IR, left of the ocean colors)
 with a natural palette, hottest first:
-  red ochre (Pilbara-type red dirt) -> desert tan -> khaki -> olive green
+  red ochre / rust -> rust-brown -> brown-tan -> dry grass
+(retuned 26 Nov 2026: at Australian noon the first version came out peach;
+this matches NASA Blue Marble's outback color)
 then blends back into the original ocean colors by column C_END.
 Brightness still comes from the visible channel (via the LUT's own
 brightness at column LUM_COL), so salt lakes stay pale and shadows dark.
@@ -28,14 +30,14 @@ from PIL import Image
 
 # (column, (R, G, B) chroma) - only the ratios matter; luminance is set below
 STOPS = [
-    (0,  (1.00, 0.70, 0.48)),   # hottest: red ochre
-    (16, (1.00, 0.79, 0.58)),   # desert tan
-    (28, (0.90, 0.85, 0.60)),   # khaki / dry grass
-    (36, (0.66, 0.78, 0.46)),   # olive green (vegetation)
+    (0,  (1.00, 0.66, 0.42)),   # hottest: red ochre / rust (Pilbara-type red dirt)
+    (16, (1.00, 0.70, 0.46)),   # rust-brown outback
+    (28, (1.00, 0.75, 0.50)),   # brown-tan
+    (36, (0.92, 0.86, 0.56)),   # dry grass, into the ocean colors by C_END
 ]
 C_END = 43        # back to the original LUT (ocean) by this column
 LUM_COL = 34      # take each row's brightness from the original LUT here
-BRIGHT = 1.12     # land a little brighter than the original land colors
+BRIGHT = 0.80     # retuned 26 Nov 2026 against Blue Marble at Australian noon
 
 W = np.array([0.299, 0.587, 0.114])
 

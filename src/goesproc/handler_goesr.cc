@@ -569,10 +569,16 @@ void GOESRImageHandler::handleImageForFalseColor(GOESRProduct p1) {
   auto i0 = p0.getImage(config_);
   auto i1 = p1.getImage(config_);
   auto out = Image::generateFalseColor(i0, i1, config_.lut);
+  auto mat = out->getRawImage();
+
+  // USRG_GeoColor: natural land colors (full disk only)
+  if (config_.geocolor.enabled() && p0.getRegion().nameShort == "FD") {
+    geocolor::apply(config_.geocolor, i0->getRawImage(), i1->getRawImage(),
+                    mat, p0.getFrameStart().tv_sec);
+  }
   i0.reset();
   i1.reset();
 
-  auto mat = out->getRawImage();
   overlayMaps(p0, mat);
   auto path = fb.build(config_.filename, config_.format);
   fileWriter_->write(path, mat, &t);

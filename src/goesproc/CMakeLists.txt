@@ -13,6 +13,7 @@ set(GOESPROC_SRCS
   handler_nws_text.cc
   handler_text.cc
   image.cc
+  geocolor.cc
   lrit_processor.cc
   options.cc
   packet_processor.cc

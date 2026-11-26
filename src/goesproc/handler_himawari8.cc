@@ -337,10 +337,16 @@ void Himawari8ImageHandler::handleFalseColor(
   fb.channel.nameLong = "False Color";
 
   auto out = Image::generateFalseColor(i0, i1, config_.lut);
+  auto mat = out->getRawImage();
+
+  // USRG_GeoColor: natural land colors
+  if (config_.geocolor.enabled()) {
+    geocolor::apply(config_.geocolor, i0->getRawImage(), i1->getRawImage(),
+                    mat, time);
+  }
   i0.reset();
   i1.reset();
 
-  auto mat = out->getRawImage();
   overlayMaps(*last, mat);
   auto path = fb.build(config_.filename, config_.format);
   fileWriter_->write(path, mat, &t);
