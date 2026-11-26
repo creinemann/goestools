@@ -294,6 +294,8 @@ the Pi upgrade guide, that's `~/goestools-usradioguy`; otherwise it's
 usually `~/goestools`:
 ```sh
 cd ~/goestools-usradioguy        # or: cd ~/goestools
+git fetch origin
+git checkout main                # early installs were on "usradioguy-modernize"
 git pull
 git submodule update --init --recursive
 ```
