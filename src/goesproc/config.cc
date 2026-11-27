@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <iostream>
 #include <sstream>
 #include <toml/toml.h>
 
@@ -419,6 +420,125 @@ bool loadHandlers(const toml::Value& v, Config& out) {
 
 } // namespace
 
+// ---------------------------------------------------------------------------
+// USRadioguy: USRG_GeoColor and USRG_GeoFusion are made automatically for
+// every satellite this config processes (GOES-18, GOES-19, Himawari-9), using
+// the data installed with goestools. A config that already has its own
+// GeoColor / GeoFusion handler for a satellite keeps it, and nothing is
+// added twice. Turn the automatic images off with:
+//
+//   [usradioguy]
+//   geocolor = false
+//
+#ifndef GOESTOOLS_SHARE_DIR
+#define GOESTOOLS_SHARE_DIR "/usr/local/share/goestools"
+#endif
+
+namespace {
+
+Gradient defaultCh13Gradient() {
+  // Same colors as the USRadioguy ch13_enhanced images (Kelvin)
+  const std::vector<std::pair<float, const char*>> pts = {
+    {333, "#000000"}, {273, "#b9b9b9"}, {263, "#eaeaea"}, {253, "#00ffff"},
+    {238, "#0000ff"}, {237.999, "#000080"}, {235, "#003300"}, {230, "#008000"},
+    {222, "#ffff00"}, {208, "#ff0000"}, {198, "#ff7f7f"}, {193.15, "#800080"},
+    {188, "#301030"}, {178, "#ffffff"}};
+  Gradient g;
+  for (const auto& p : pts) {
+    float r, gg, b;
+    std::tie(r, gg, b) = parseHexColor(p.second);
+    g.addPoint(GradientPoint::fromRGB(p.first, r, gg, b));
+  }
+  return g;
+}
+
+void addAutoGeoColor(const toml::Value& v, Config& out) {
+  auto opt = v.find("usradioguy");
+  if (opt) {
+    auto on = opt->find("geocolor");
+    if (on && on->is<bool>() && !on->as<bool>()) {
+      return;
+    }
+  }
+
+  const std::string share = std::string(GOESTOOLS_SHARE_DIR) + "/usradioguy";
+  struct Sat { const char* origin; const char* name; const char* prefix; bool himawari; };
+  const std::vector<Sat> sats = {
+    {"goes19", "goes19", "goes19", false},
+    {"goes18", "goes18", "goes18", false},
+    {"himawari8", "himawari9", "Himawari9", true},
+  };
+
+  std::vector<Config::Handler> add;
+  for (const auto& sat : sats) {
+    bool used = false, haveGeo = false, haveFusion = false;
+    for (const auto& h : out.handlers) {
+      if (h.type != "image" || h.origin != sat.origin) continue;
+      used = true;
+      if (h.geofusion.enabled) haveFusion = true;
+      else if (h.geocolor.enabled()) haveGeo = true;
+    }
+    if (!used || (haveGeo && haveFusion)) continue;
+
+    Config::Handler h;
+    h.type = "image";
+    h.origin = sat.origin;
+    h.regions = { "fd" };
+    h.format = "jpg";
+    h.geocolor.path = share + "/geocolor";
+    h.geocolor.satellite = sat.name;
+    h.geocolor.strength = 1.0f;
+    if (sat.himawari) {
+      h.channels = { "vs", "ir" };
+      h.remap["VS"] = cv::imread(share + "/himawari9_vs_curve.png", cv::IMREAD_UNCHANGED);
+      h.remap["IR"] = cv::imread(share + "/himawari9_ir_curve.png", cv::IMREAD_UNCHANGED);
+      h.lut = cv::imread(share + "/himawari9_night_lut.png", cv::IMREAD_COLOR);
+    } else {
+      h.channels = { "ch02", "ch13" };
+      h.remap["CH02"] = cv::imread(share + "/usradioguy_ch02_curve.png", cv::IMREAD_UNCHANGED);
+      h.lut = cv::imread(share + "/usradioguy_lut.png", cv::IMREAD_COLOR);
+      h.gradient["CH13"] = defaultCh13Gradient();
+    }
+    bool ok = h.lut.data != nullptr;
+    for (const auto& r : h.remap) ok = ok && r.second.data != nullptr && r.second.total() == 256;
+    ok = ok && cv::imread(h.geocolor.path + "/" + sat.name + "_land.png", cv::IMREAD_GRAYSCALE).data;
+    if (!ok) {
+      std::cerr << "USRG_GeoColor: data not found in " << share
+                << " (run make install); no automatic GeoColor for " << sat.name << std::endl;
+      continue;
+    }
+    const std::string base = std::string("./") + sat.name + "/{region:short|lower}/";
+    if (!haveGeo) {
+      Config::Handler g = h;
+      g.gradient.clear();
+      g.dir = base + "USRG_GeoColor/{time:%Y-%m-%d}";
+      g.filename = std::string(sat.prefix) + "_{region:short}_USRG_GeoColor_{time:%Y%m%dT%H%M%SZ}";
+      add.push_back(g);
+    }
+    if (!haveFusion) {
+      Config::Handler f = h;
+      f.geofusion.enabled = true;
+      f.geofusion.strength = 0.75f;
+      if (sat.himawari) {
+        f.geofusion.table = share + "/himawari9_geofusion_table.png";
+        f.geofusionTable = cv::imread(f.geofusion.table, cv::IMREAD_COLOR);
+        if (!f.geofusionTable.data || f.geofusionTable.total() != 256) {
+          std::cerr << "USRG_GeoFusion: " << f.geofusion.table << " not found; no automatic GeoFusion for Himawari-9" << std::endl;
+          continue;
+        }
+      }
+      f.dir = base + "USRG_GeoFusion/{time:%Y-%m-%d}";
+      f.filename = std::string(sat.prefix) + "_{region:short}_USRG_GeoFusion_{time:%Y%m%dT%H%M%SZ}";
+      add.push_back(f);
+    }
+  }
+  for (auto& h : add) {
+    out.handlers.push_back(std::move(h));
+  }
+}
+
+} // namespace
+
 Config Config::load(const std::string& file) {
   Config out;
 
@@ -431,6 +551,9 @@ Config Config::load(const std::string& file) {
 
   try {
     loadHandlers(pr.value, out);
+    if (out.ok) {
+      addAutoGeoColor(pr.value, out);
+    }
   } catch (std::runtime_error& e) {
     out.ok = false;
     out.error = e.what();

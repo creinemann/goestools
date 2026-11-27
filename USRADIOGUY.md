@@ -42,7 +42,20 @@ paints land like ocean, deserts red, or the whole US green in November.
 * Works for **GOES-19, GOES-18 and Himawari-9**, full disk only.
   Mesoscale images keep the LUT colors.
 
-Add it to any 2-channel false color handler:
+**It's automatic.** goesproc makes USRG_GeoColor and USRG_GeoFusion
+for every satellite your config already handles (GOES-19, GOES-18,
+Himawari-9), with no settings. They go to `fd/USRG_GeoColor/` and
+`fd/USRG_GeoFusion/` in your output folder, using the data installed by
+`make install`. To turn them off, add this to your config:
+
+```toml
+[usradioguy]
+geocolor = false
+```
+
+To change how they're made (another LUT, maps, a different folder), add
+your own handler; goesproc then skips its automatic one for that
+satellite. GeoColor goes on any 2-channel false color handler:
 
 ```toml
   [handler.lut]
@@ -85,8 +98,9 @@ storms stay solid.
 * **New: Himawari-9 IR Enhanced** (`fd/ir_enhanced/`, `..._IRENH_...`),
   the same Channel 13 style colors for the relayed infrared image.
 
-Add it to a USRG_GeoColor handler (it writes a GeoFusion image instead
-of the plain GeoColor one, so use a copy of that handler):
+Like GeoColor it's made automatically. For your own version, add this
+to a copy of a USRG_GeoColor handler (it then writes a GeoFusion image
+instead of the plain GeoColor one):
 
 ```toml
   [handler.geofusion]

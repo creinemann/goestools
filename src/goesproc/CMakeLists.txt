@@ -43,6 +43,9 @@ target_link_libraries(goesproc nlohmann_json)
 target_link_libraries(goesproc timer)
 target_link_libraries(goesproc version)
 
+# Where make install puts the USRadioguy data (automatic USRG_GeoColor / GeoFusion)
+target_compile_definitions(goesproc PRIVATE GOESTOOLS_SHARE_DIR="${CMAKE_INSTALL_PREFIX}/share/goestools")
+
 if(OPENCV_FOUND)
   target_link_libraries(goesproc opencv_core opencv_highgui opencv_imgproc)
   target_include_directories(goesproc PRIVATE ${OPENCV_INCLUDE_DIRS})
