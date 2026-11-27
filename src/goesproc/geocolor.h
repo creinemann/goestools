@@ -47,6 +47,31 @@ bool apply(
   cv::Mat& out,
   time_t when);
 
+// USRG_GeoFusion (USRadioguy addition)
+//
+// GeoColor with the enhanced Channel 13 (cloud-top temperature) colors
+// laid on top. Everything grey in the enhancement (warmer than about
+// -20 C, plus map lines) is clear, so only the colored cold cloud tops
+// show, at `strength` (0.75 = 75%, GeoColor still shows through).
+//
+// Configure in the same false color handler as [handler.geocolor]:
+//   [handler.geofusion]
+//   strength = 0.75
+//   table = "/usr/share/goestools/usradioguy/himawari9_geofusion_table.png"   # optional
+//
+// The IR colors come from `table` (256x1 color image indexed by the
+// handler's second, remapped input) when set; otherwise from the
+// handler's [handler.gradient.<ir channel>] and the file's calibration.
+struct Fusion {
+  bool enabled = false;
+  float strength = 0.75f;
+  std::string table;
+};
+
+// out: the GeoColor image (BGR), changed in place.
+// enhanced: the enhanced IR image (BGR, same size).
+void fuse(cv::Mat& out, const cv::Mat& enhanced, float strength);
+
 // Weight of the second month for a date (months centred on the 15th).
 // Sets m0/m1 to the two months (1..12) to blend.
 float monthBlend(time_t when, int& m0, int& m1);

@@ -64,6 +64,46 @@ while it runs.
 
 Blue Marble imagery: NASA Earth Observatory, Reto Stöckli (public domain).
 
+### USRG_GeoFusion: GeoColor plus cold cloud tops (new, 27 Nov 2026)
+![USRG_GeoFusion for GOES-19, GOES-18 and Himawari-9, received in Horicon](docs/images/usrg_geofusion.jpg)
+
+**USRG_GeoFusion** is USRG_GeoColor with the enhanced Channel 13 colors
+laid on top. Everything grey in the enhancement (cloud warmer than about
+-20 C, clear sky, map lines) is left out, so you see natural Earth colors
+plus the colored cold cloud tops of storms. The colors go on at 75%, so
+the cloud texture underneath still shows. Small gaps in the color (dark
+steps in the color scale, map lines crossing a storm) are filled so
+storms stay solid.
+
+* **GOES-19 and GOES-18:** the colors come from the file's own
+  calibration and the same `[handler.gradient.ch13]` as your
+  `ch13_enhanced` images.
+* **Himawari-9:** the relay carries no calibration, so the colors come
+  from a table measured from a GOES-18 Channel 13 pair
+  (`himawari9_geofusion_table.png`, made by
+  `scripts/make_geofusion_tables.py`).
+* **New: Himawari-9 IR Enhanced** (`fd/ir_enhanced/`, `..._IRENH_...`),
+  the same Channel 13 style colors for the relayed infrared image.
+
+Add it to a USRG_GeoColor handler (it writes a GeoFusion image instead
+of the plain GeoColor one, so use a copy of that handler):
+
+```toml
+  [handler.geofusion]
+  strength = 0.75          # 1.0 = enhancement colors fully opaque
+
+  # GOES: the Channel 13 colors
+  [handler.gradient.ch13]
+  points = [ ... same as your ch13_enhanced handler ... ]
+
+  # Himawari-9 instead of a gradient:
+  # table = "/usr/share/goestools/usradioguy/himawari9_geofusion_table.png"
+```
+
+Images go to `fd/USRG_GeoFusion/`, named `..._USRG_GeoFusion_...`.
+At night GeoColor is dark, so GeoFusion shows the cold cloud tops over
+a black Earth. It adds about one second per full disk.
+
 ### Builds on today's systems
 * Works with CMake 3.10 through **CMake 4.x**. The original no longer
   configures on CMake 4.

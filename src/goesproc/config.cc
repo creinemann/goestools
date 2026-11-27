@@ -348,6 +348,25 @@ bool loadHandlers(const toml::Value& v, Config& out) {
       }
     }
 
+    auto tfus = th->find("geofusion");
+    if (tfus) {
+      h.geofusion.enabled = true;
+      auto strength = tfus->find("strength");
+      if (strength) {
+        h.geofusion.strength = strength->is<int>() ? strength->as<int>() : strength->as<double>();
+      }
+      auto table = tfus->find("table");
+      if (table) {
+        h.geofusion.table = table->as<std::string>();
+        h.geofusionTable = cv::imread(h.geofusion.table, cv::IMREAD_COLOR);
+        if (!h.geofusionTable.data || h.geofusionTable.total() != 256) {
+          out.ok = false;
+          out.error = "geofusion: table must be a 256 pixel color image: " + h.geofusion.table;
+          return false;
+        }
+      }
+    }
+
     auto filename = th->find("filename");
     if (filename) {
       // To keep this readable, it can be specified as a list.
@@ -372,6 +391,12 @@ bool loadHandlers(const toml::Value& v, Config& out) {
     if (h.geocolor.enabled() && !h.lut.data) {
       out.ok = false;
       out.error = "geocolor works on a false color handler: also set [handler.lut]";
+      return false;
+    }
+
+    if (h.geofusion.enabled && !h.geocolor.enabled()) {
+      out.ok = false;
+      out.error = "geofusion goes on top of GeoColor: also set [handler.geocolor]";
       return false;
     }
 

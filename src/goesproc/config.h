@@ -73,6 +73,10 @@ struct Config {
     // (see geocolor.h). Empty path = off.
     geocolor::Settings geocolor;
 
+    // USRG_GeoFusion: enhanced IR colors on top of GeoColor (see geocolor.h).
+    geocolor::Fusion geofusion;
+    cv::Mat geofusionTable;
+
     // Filename format (see filename.cc for more info)
     std::string filename;
 

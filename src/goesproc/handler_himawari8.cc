@@ -1,5 +1,6 @@
 #include "handler_himawari8.h"
 
+#include <iostream>
 #include <sstream>
 
 #include <util/error.h>
@@ -343,6 +344,20 @@ void Himawari8ImageHandler::handleFalseColor(
   if (config_.geocolor.enabled()) {
     geocolor::apply(config_.geocolor, i0->getRawImage(), i1->getRawImage(),
                     mat, time);
+
+    // USRG_GeoFusion: enhanced IR colors on top of GeoColor. The relay
+    // files carry no calibration, so the colors come from a table
+    // indexed by the remapped IR input (GOES Channel 13 scale).
+    if (config_.geofusion.enabled) {
+      if (config_.geofusionTable.data) {
+        cv::Mat ir3, enhanced;
+        cv::cvtColor(i1->getRawImage(), ir3, cv::COLOR_GRAY2BGR);
+        cv::LUT(ir3, config_.geofusionTable.reshape(3, 1), enhanced);
+        geocolor::fuse(mat, enhanced, config_.geofusion.strength);
+      } else {
+        std::cerr << "USRG_GeoFusion: Himawari needs [handler.geofusion] table = ...; saving GeoColor only" << std::endl;
+      }
+    }
   }
   i0.reset();
   i1.reset();

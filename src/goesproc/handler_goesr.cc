@@ -1,5 +1,6 @@
 #include "handler_goesr.h"
 
+#include <iostream>
 #include <stdexcept>
 
 #include <util/error.h>
@@ -575,6 +576,36 @@ void GOESRImageHandler::handleImageForFalseColor(GOESRProduct p1) {
   if (config_.geocolor.enabled() && p0.getRegion().nameShort == "FD") {
     geocolor::apply(config_.geocolor, i0->getRawImage(), i1->getRawImage(),
                     mat, p0.getFrameStart().tv_sec);
+
+    // USRG_GeoFusion: enhanced IR colors on top of GeoColor
+    if (config_.geofusion.enabled) {
+      cv::Mat table;
+      if (config_.geofusionTable.data) {
+        table = config_.geofusionTable.reshape(3, 1);
+      } else {
+        auto grad = config_.gradient.find(p1.getChannel().nameShort);
+        auto idf = p1.loadImageDataFunction();
+        if (grad != std::end(config_.gradient) && idf.size() == 256) {
+          table = cv::Mat(1, 256, CV_8UC3, cv::Scalar(0, 0, 0));
+          for (const auto& i : idf) {
+            auto p = grad->second.interpolate(i.second, config_.lerptype);
+            table.data[i.first * 3] = p.rgb[2] * 255;
+            table.data[i.first * 3 + 1] = p.rgb[1] * 255;
+            table.data[i.first * 3 + 2] = p.rgb[0] * 255;
+          }
+        } else {
+          std::cerr << "USRG_GeoFusion: no [handler.gradient."
+                    << toLower(p1.getChannel().nameShort)
+                    << "] or no calibration in the file; saving GeoColor only" << std::endl;
+        }
+      }
+      if (table.data) {
+        cv::Mat ir3, enhanced;
+        cv::cvtColor(i1->getRawImage(), ir3, cv::COLOR_GRAY2BGR);
+        cv::LUT(ir3, table, enhanced);
+        geocolor::fuse(mat, enhanced, config_.geofusion.strength);
+      }
+    }
   }
   i0.reset();
   i1.reset();

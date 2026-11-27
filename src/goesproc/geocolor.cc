@@ -164,4 +164,67 @@ bool apply(
   return true;
 }
 
+void fuse(cv::Mat& out, const cv::Mat& enhanced, float strength) {
+  if (out.size() != enhanced.size() || out.type() != CV_8UC3 || enhanced.type() != CV_8UC3) {
+    std::cerr << "USRG_GeoFusion: image sizes differ, skipped" << std::endl;
+    return;
+  }
+  strength = std::max(0.0f, std::min(1.0f, strength));
+
+  // Colorfulness of the enhancement: grey/white/black = 0, colors = high.
+  cv::Mat alpha(out.size(), CV_32F);
+  cv::Mat solid(out.size(), CV_8U);
+  for (int y = 0; y < out.rows; y++) {
+    const uint8_t* e = enhanced.ptr<uint8_t>(y);
+    float* a = alpha.ptr<float>(y);
+    uint8_t* m = solid.ptr<uint8_t>(y);
+    for (int x = 0; x < out.cols; x++) {
+      int b = e[3 * x], g = e[3 * x + 1], r = e[3 * x + 2];
+      int chroma = std::max(b, std::max(g, r)) - std::min(b, std::min(g, r));
+      float v = std::min(1.0f, std::max(0.0f, (chroma - 28) / 42.0f));
+      a[x] = v;
+      m[x] = v > 0.5f ? 1 : 0;
+    }
+  }
+
+  // Close small gaps (dark steps in the color scale, map lines crossing
+  // colored cloud) and fill small enclosed holes, so storms stay solid.
+  // Sizes are for a 5424 px full disk and scale with the image.
+  const double scale = out.cols / 5424.0;
+  int k = std::max(3, int(std::lround(5 * scale)) | 1);
+  cv::morphologyEx(solid, solid, cv::MORPH_CLOSE,
+                   cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(k, k)));
+  cv::Mat inv = 1 - solid, labels, stats, centroids;
+  int n = cv::connectedComponentsWithStats(inv, labels, stats, centroids, 8);
+  const int maxHole = std::max(20, int(300 * scale * scale));
+  std::vector<uint8_t> small(n, 0);
+  for (int i = 1; i < n; i++) {
+    small[i] = stats.at<int>(i, cv::CC_STAT_AREA) < maxHole;
+  }
+  for (int y = 0; y < out.rows; y++) {
+    const int* l = labels.ptr<int>(y);
+    uint8_t* m = solid.ptr<uint8_t>(y);
+    for (int x = 0; x < out.cols; x++) {
+      if (!m[x] && small[l[x]]) m[x] = 1;
+    }
+  }
+  cv::Mat soft;
+  solid.convertTo(soft, CV_32F);
+  cv::GaussianBlur(soft, soft, cv::Size(5, 5), 0);
+  cv::max(alpha, soft, alpha);
+
+  for (int y = 0; y < out.rows; y++) {
+    uint8_t* o = out.ptr<uint8_t>(y);
+    const uint8_t* e = enhanced.ptr<uint8_t>(y);
+    const float* a = alpha.ptr<float>(y);
+    for (int x = 0; x < out.cols; x++) {
+      float w = a[x] * strength;
+      if (w <= 0.0f) continue;
+      for (int c = 0; c < 3; c++) {
+        o[3 * x + c] = uint8_t(o[3 * x + c] * (1.0f - w) + e[3 * x + c] * w + 0.5f);
+      }
+    }
+  }
+}
+
 } // namespace geocolor
