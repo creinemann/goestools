@@ -83,6 +83,12 @@ Blue Marble imagery: NASA Earth Observatory, Reto Stöckli (public domain).
 * **Himawari timestamps:** Himawari image times were off by your UTC
   offset on any machine whose clock isn't set to UTC. They now use true
   UTC.
+* **Himawari folders:** the example configs now save each Himawari
+  channel in its own folder, the same way GOES does:
+  `himawari9/fd/vs/<date>/`, `fd/ir/<date>/`, `fd/wv/<date>/` (before,
+  all three went into `himawari9/fd/<date>/`). In your own config,
+  change the raw Himawari handler's line to
+  `directory = "./himawari9/{region:short|lower}/{channel:short|lower}/{time:%Y-%m-%d}"`.
 
 ### Himawari-9 false color
 The Himawari handler (`origin = "himawari8"`) now supports the same
